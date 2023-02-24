@@ -1,10 +1,11 @@
 ---
-title: "Simu4_attenuation+presence_reelle"
+title: "Scenario2_markov"
+author: Victoria BANCEL-LEGENDRE - Marie Joigneau - Armelle LAJEUNESSE
 output: html_document
 date: '2023-01-18'
 ---
 
-## ---- LIBRARY -------------------------------------------------------------
+## ---- LIBRAIRIES -------------------------------------------------------------
 
 ```{r}
 library(ggplot2)
@@ -19,12 +20,11 @@ library(ggplot2)
 ```
 
 
-## ---- INTRODUCTION -------------------------------------------------------------
+## ---- FONCTIONS DE BASE----------------------------------------------------------
 
 Distance entre 2 points
 
 ```{r}
-# Distance entre 2 points
 function_distance <- function(x1,x2,y1,y2){
   return(sqrt((x2-x1)^2+(y2-y1)^2))
 }
@@ -38,7 +38,7 @@ noms_colonnes_t <- sapply(1:720,function(i){
 })
 ```
 
-Mise en place des micros
+Mise en place des micros et visualisation
 
 ```{r}
 micros_x <- c(0.2,0.2,0.2,0.6,0.6,0.6,1,1,1)
@@ -444,9 +444,9 @@ liste_repet <- repetition_etude(lambda, p, q, nbr_matins, df_micro, repet)
 ```
 
 
-## ---- MODELE OCCUPANCY -------------------------------------------------------------
+## ---- MODELE OCCUPANCY -----------------------------------------------------------
 
-# 1) Modèle avec predict
+# 1) Le modèle
 
 On va faire tourner le modèle d'occupancy sur les détections de chaque repet. Le micro est une covariable pour l'occupancy (mais pas pour la detection)
 
@@ -485,7 +485,7 @@ save(df_occu_detect_repet, file = "scenario2_Marie_lambda1_p0.4q0.8")
 ```
 
 
-# 2) Extraction moyenne + ecart-type de la proba d'occupancy + detection
+# 2) Extraction des moyenne et ecart-type des probabilités d'occupancy et de detection
 
 Extraction de la moyenne d'occupancy pour chaque micro, et de la moyenne de détection
 
@@ -526,7 +526,7 @@ moyenne_des_moyennes_occupancy <- mean(unlist(moyenne_des_moyennes_occupancy));m
 
 
 
-## ---- PRESENCE REELLE -------------------------------------------------------------
+# 3) Présence réelle
 
 ```{r}
 tot_distance_repet <- liste_repet[[2]]
@@ -563,7 +563,7 @@ proba_presence_reelle_micro <- function_proba_presence_reelle_micro(tot_distance
 ```
 
 
-##---- DETECTION REELLE ----------------------------------------------------
+# 4) Détection réelle
 
 Les oiseaux qui devraient être détectés sont les oiseaux qui chantent et dont l'intensité de chant est perçu par le micro. Soit quand le chant de l'oiseau arrivé au micro est > à 40 dB. 
 Calculons la distance max à laquelle le micro peut détecter le chant de l'oiseau

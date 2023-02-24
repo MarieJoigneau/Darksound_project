@@ -1,10 +1,11 @@
 ---
-title: "simu_micro_covar_in_occu"
+title: "Scenario1_partie2_micros_homogenes"
+author: Victoria BANCEL-LEGENDRE - Marie Joigneau - Armelle LAJEUNESSE
 output: html_document
 date: '2023-01-12'
 ---
 
-## ---- LIBRARY -------------------------------------------------------------
+## ---- LIBRAIRIES -------------------------------------------------------------
 
 ```{r}
 library(ggplot2)
@@ -16,23 +17,11 @@ library(tidyverse)
 library(unmarked)
 ```
 
-## ---- LOAD .RData + working directory ------------------------------------------------
-
-Data Marie (à adapter pour vous)
-```{r}
-load("D:/OneDrive/ACO 3eme annee 2022-2023/Projet M2 - Oiseaux/Bird-population-estimationFINALFINAL/Nos simulations/dataMarie.RData")
-# à changer selon la personne
-
-setwd("D:/OneDrive/ACO 3eme annee 2022-2023/Projet M2 - Oiseaux/Bird-population-estimationTHE_LAST")
-```
-
-
-## ---- INTRODUCTION -------------------------------------------------------------
+## ---- FONCTIONS DE BASE----------------------------------------------------------
 
 Distance entre 2 points
 
 ```{r}
-# Distance entre 2 points
 distance <- function(x1,x2,y1,y2){
   return(sqrt((x2-x1)^2+(y2-y1)^2))
 }
@@ -46,15 +35,14 @@ noms_colonnes_t <- sapply(1:720,function(i){
 })
 ```
 
-Mise en place des micros
+Mise en place des micros et visualisation
 
 ```{r}
 micros_x <- c(0.2,0.2,0.2,0.6,0.6,0.6,1,1,1)
 micros_y <- c(0.2,0.6,1,0.2,0.6,1,0.2,0.6,1)
 df_micro <- data.frame(micros_x=micros_x,micros_y=micros_y)
-df_micro$ID <-1:nrow(df_micro)
 
-plot(df_micro$micros_x,df_micro$micros_y,xlim=c(0,1.2),ylim=c(0,1.2))
+plot(df_micro$micros_x,df_micro$micros_y,xlim=c(0,1.2),ylim=c(0,1.2),bty="l",type="p",pch=16,xlab="Position en x (en km)", ylab="Position en y (en km)", cex.lab=1.25, cex.axis=1.25,cex.main=1.25)
 ```
 
 ## ---- SIMULATION -------------------------------------------------------------
@@ -269,9 +257,9 @@ liste_repet <- repetition_etude(lambda, treshold, nbr_matins, df_micro, repet)
 ```
 
 
-## ---- MODELE OCCUPANCY -------------------------------------------------------------
+## ---- MODELE OCCUPANCY -----------------------------------------------------------
 
-# 1) Modèle avec predict
+# 1) Le modèle
 
 On va faire tourner le modèle d'occupancy sur chaqu repet. Le micro est une covariable pour l'occupancy (mais pas pour la detection)
 
@@ -322,7 +310,7 @@ df_occu_detect_repet <- function_occu_detect(liste_repet)
 ```
 
 
-# 2) Extraction moyenne + ecart-type de la proba d'occupancy + detection
+# 2) Extraction des moyenne et ecart-type des probabilités d'occupancy et de detection
 
 Extraction de la moyenne d'occupancy pour chaque micro, et de la moyenne de détection
 
@@ -354,15 +342,4 @@ df_moy_sd_occu_detect <- data.frame(cbind(moy_sd_detect,liste_moyenne_sd_occu[[1
 colnames(df_moy_sd_occu_detect) <- c("detection", "occupancy")
 
 save(df_moy_sd_occu_detect, file = "simu3bis_df_lambda3_pc0.9")
-
-#save(liste_moyenne_sd_occu, file = "simu3bis_moy&sd_occu_lambda1_pc0")
-#save(moy_sd_detect, file = "simu3bis_moy&sd_detect_lambda1_pc0")
-
-# 
-#  moyenne_des_moyennes_occupancy <- list(rep(0, 9))
-# for (micro in 1:length(liste_moyenne_sd_occu)){
-#   moyenne_des_moyennes_occupancy[micro] <- liste_moyenne_sd_occu[[micro]][1]
-# }
-# moyenne_des_moyennes_occupancy <- mean(unlist(moyenne_des_moyennes_occupancy));moyenne_des_moyennes_occupancy
-
 ```

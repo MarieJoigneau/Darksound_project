@@ -19,6 +19,8 @@ Documents you have :
 - 4 .Rmd files ("scenario1_partie1...","scenario1_partie2...","scenario2...","scenario3..." = the R code of our 4 main simulations  
 - 1 last .Rmd file = the R code for the boxplots  
 
+Each R code function is following by a "function test". It is made to better understand the R function.  
+
 Thank you,  
 And enjoy our work,  
 The team  
