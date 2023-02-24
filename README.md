@@ -2,10 +2,12 @@
 Simulation and occupancy model for Darksound projet (Guyana) in M2 engineer project
 
 Date of the project : december 2022-february 2023  
+
 Authors :  
 - Victoria BANCEL-LEGENDRE victoria.bancel@agrocampus-ouest.fr  
 - Marie JOIGNEAU marie.joigneau@agrocampus-ouest.fr  
 - Armelle LAJEUNESSE armelle.lajeunesse@agrocampus-ouest.fr  
+
 Supervisor :  
 - Marie-Pierre ETIENNE marie-pierre.etienne@agrocampus-ouest.fr  
 - Sylvain HAUPERT sylvain.haupert@mnhn.fr  
