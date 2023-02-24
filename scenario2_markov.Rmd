@@ -1,0 +1,590 @@
+---
+title: "Simu4_attenuation+presence_reelle"
+output: html_document
+date: '2023-01-18'
+---
+
+## ---- LIBRARY -------------------------------------------------------------
+
+```{r}
+library(ggplot2)
+library(spatstat) # poisson marqué
+library(extraDistr) # pour la fonction rdnorm
+library(ggforce) # pour la fonction geom_circle
+library(oce)
+library(tidyverse)
+library(unmarked)
+library(Rlab)
+library(ggplot2)
+```
+
+
+## ---- INTRODUCTION -------------------------------------------------------------
+
+Distance entre 2 points
+
+```{r}
+# Distance entre 2 points
+function_distance <- function(x1,x2,y1,y2){
+  return(sqrt((x2-x1)^2+(y2-y1)^2))
+}
+```
+
+Permet de nommer les 720 colonnes X1 X2 ... en t1 t2 ...
+
+```{r}
+noms_colonnes_t <- sapply(1:720,function(i){
+  paste("t",i,sep="")
+})
+```
+
+Mise en place des micros
+
+```{r}
+micros_x <- c(0.2,0.2,0.2,0.6,0.6,0.6,1,1,1)
+micros_y <- c(0.2,0.6,1,0.2,0.6,1,0.2,0.6,1)
+df_micro <- data.frame(micros_x=micros_x,micros_y=micros_y)
+
+plot(df_micro$micros_x,df_micro$micros_y,xlim=c(0,1.2),ylim=c(0,1.2),bty="l",type="p",pch=16,xlab="Position en x (en km)", ylab="Position en y (en km)", cex.lab=1.25, cex.axis=1.25,cex.main=1.25)
+```
+
+## ---- SIMULATION -------------------------------------------------------------
+
+# 1) Intensité M en fonction de lambda et de la surface
+
+```{r}
+intensite_M <- function(lambda, surface=1.2*1.2){
+  mean_pois <- lambda * surface
+  M= rpois(1,mean_pois);
+  return(M)
+}
+```
+
+Test de la function
+```{r}
+M <- intensite_M(lambda = 10, surface = 1.44);M
+```
+
+# 1bis) Mise en place des fonctions markov pour le chant
+
+# 1bis.a) Fonction de simulation par oiseau
+
+Fonction simulate_singing_states :
+
+```{r}
+# Simulation du chant de l'oiseau au cours du temps :
+simulate_singing_states <- function(n, P, pi) {
+  
+  states <- numeric(n) # Vecteur des états de Markov initial (que des 0)
+  states[1] <- sample(c(1, 2), size = 1, prob = pi) # Etat initial
+  
+  for (i in 2:n) {
+    states[i] <- sample(c(1, 2), size = 1, prob = P[states[i-1],]) # sample next state given current state
+  }
+  
+  # Transformation en 0 et 1 pour aller dans le code 
+  states[which(states==1)] <- 1
+  states[which(states==2)] <- 0
+  
+  return(states)
+}
+```
+
+Test de la fonction :
+
+```{r}
+# MATRICE DE TRANSITION
+#   - important de définit les p et q préalablement
+#   - idée ici : l'oiseau a peu de chance de rechanter 
+p = 0.3 # 1-p = 0.9   p = proba de passer de l'état chante(t) à chante(t+1)
+q = 0.99 # 1-q = 0.3   q = proba de passer de l'état chante pas(t) à chante pas(t+1)
+P <- matrix(c(p, 1-q,
+              1-p, q),
+            nrow = 2, ncol = 2)
+colnames(P) <- c("chante (t+1)", "chante pas (t+1)")
+rownames(P) <- c("chante (t)", "chante pas (t)")
+print(P)
+
+
+# DISTRIBUTION STATIONNAIRE (EQUATIONS)
+
+# x = V1 = chante   et y = V2 = chante pas
+# x*p + y*(1-q) = x
+# x*(1-p) + y*q = y
+# x+y=1
+
+# donne :
+# x = (((p-1)*q)/(p+q-2)) - ((p-1)/(p+q-2))) / (p-1)
+# y = (p-1) / (p+q-2)
+
+# DISTRIBUTION STATIONNAIRE (RESULTATS)
+p = 0.3 # 1-p = 0.9   p = proba de passer de l'état chante(t) à chante(t+1)
+q = 0.99 # 1-q = 0.3   q = proba de passer de l'état chante pas(t) à chante pas(t+1)
+pi3 <- numeric(2)
+pi3[1] <- ( ( ((p-1)*q)/ (p+q-2) ) - ( ((p-1))/ (p+q-2) ) )/(p-1)
+pi3[2] <- (p-1) / (p+q-2)
+print(pi3)
+
+
+# Simulation du chant pour 720 étapes de Markov (pour un oiseau) ----------------
+singing_states <- simulate_singing_states(720, P, pi3)
+print(singing_states)
+```
+
+
+# 1bis.b) Fonction pour remplir la variable chant_t_markov du dataframe
+
+Fonction chant_markov :
+
+```{r}
+chant_markov <- function(df,p,q){
+  
+  df$chant <- 0 # on initialise la colonne de chant
+  nb_total_oiseau <- length(df$x)/720 # Calcul du nombre total d'oiseaux
+  
+  # MATRICE DE TRANSITION :
+  #   - important de définit les p et q préalablement
+  #   - idée ici : l'oiseau a peu de chance de rechanter 
+  P <- matrix(c(p, 1-q,
+                1-p, q),
+              nrow = 2, ncol = 2)
+  colnames(P) <- c("chante (t+1)", "chante pas (t+1)")
+  rownames(P) <- c("chante (t)", "chante pas (t)")
+  
+  # DISTRIBUTION STATIONNAIRE :
+  pi <- numeric(2)
+  pi[1] <- ( ( ((p-1)*q)/ (p+q-2) ) - ( ((p-1))/ (p+q-2) ) )/(p-1)
+  pi[2] <- (p-1) / (p+q-2)
+  
+  # SIMULATION POUR CHAQUE OISEAU :
+  for (num_oiseau in 1:nb_total_oiseau){
+    
+    positions_oiseau_i <- which(df$x==df$x[num_oiseau]) # On isole le vecteur chant de l'oiseau en trouvant les lignes correspondantes à l'oiseau num_oiseau
+    singing_states <- simulate_singing_states(720, P, pi) # Simulation du chant pour 720 étapes de Markov (pour un oiseau)
+    df$chant[positions_oiseau_i] <- singing_states # on met le vecteur dans la colonne chant pour l'oiseau num_oiseau
+  }
+  return(df)
+}
+```
+
+
+Test de la fonction :
+
+```{r}
+p = 0.3 # 1-p = 0.9   p = proba de passer de l'état chante(t) à chante(t+1)
+q = 0.99 # 1-q = 0.3   q = proba de passer de l'état chante pas(t) à chante pas(t+1)
+t <- c();for (i in 1:720){t <- c(t,rep(i,3))}
+df_test <- data.frame(x=rep(runif(3,min=0,max=1),720),y=rep(runif(3,min=0,max=1),720),t=t) # dataframe prêt pour la fonction (on teste ici pour 3 individus)
+
+test10 <- chant_markov(df_test,p,q);test10
+test10[which(test10$x==test10$x[1]),]$chant # pour voir pour un oiseau
+```
+
+
+# 2) Génération du tableau de coordonnées des oiseaux pour toute l'heure
+
+```{r}
+function_oiseau <- function(intensite_M,p,q){
+  if (intensite_M !=0){ # si on a au moins un oiseau
+    
+    # data frame des x,y,t :
+    t <- c()
+    x <- rep(runif(intensite_M,min=0,max=1.2),720)
+    y <- rep(runif(intensite_M,min=0,max=1.2),720)
+    for (i in 1:720){t <- c(t,rep(i,intensite_M))} 
+    df <- data.frame(x=x,y=y,t=t)
+    
+    # on rajoute la variable chant_t_markov :
+    df <- chant_markov(df,p,q)
+  }
+  # sinon on génère un oiseau très loin pour avoir un vecteur de détection de 0, et non juste moins de lignes dans le tableau de détection (car ce vecteur n'apparaît pas)
+    else{ 
+    df <- data.frame(x=9999,y=9999,t=1:720,chant=0)
+  }
+  return(df)
+}
+```
+
+Test de la fonction :
+
+```{r}
+df_oiseau <- function_oiseau(intensite_M=3,p=0.3,q=0.99);df_oiseau
+df_oiseau[which(df_oiseau$x==df_oiseau$x[1]),]$chant # pour voir pour un oiseau
+```
+
+
+# 3) Fonction distance entre chaque oiseau et chaque micro au temps t
+
+Fonction qui renvoie une liste de longueur "nombre de micros". Le premier élément de la liste contient la distance de tous les oiseaux avec le 1er micro. Fonction à utiliser pour un temps t.
+
+```{r}
+distance_micros_oiseaux_temps_t <- function(df_micro, df_oiseau, temps){
+  #on garde la partie du tableau des oiseau qui correspond au temps t
+  df_oiseau_t <- subset(df_oiseau, t == temps)
+  #on parcourt tous les micros
+  distance_oiseau_par_micro <- lapply(1: length(df_micro$micros_x), function(i){
+    #on crée un vecteur avec la distance entre le micro i et tous les oiseaux
+    distance_micro_i_tous_oiseaux <- lapply(1:length(df_oiseau_t$x), function(k){
+      function_distance(df_micro$micros_x[i], df_oiseau_t$x[k], df_micro$micros_y[i], df_oiseau_t$y[k])
+    })
+  })
+  return(distance_oiseau_par_micro)
+}
+ 
+```
+
+
+Test de la fonction
+```{r}
+distance_par_micro_par_oiseau <- distance_micros_oiseaux_temps_t(df_micro, df_oiseau, temps = 1);distance_par_micro_par_oiseau
+```
+
+
+
+# 3.5) Fonction attenuation
+
+```{r}
+function_proba_entendre <- function(distance_au_micro){
+  
+  proba <- 0.02/(distance_au_micro+0.02)
+  
+  return(proba) 
+}
+```
+
+Test de la fonction
+
+```{r}
+distance_au_micro_test= 0.1
+proba_entendre <- function_proba_entendre(distance_au_micro_test)
+proba_entendre
+```
+
+
+
+# 4) Fonction détection
+
+cette fonction renvoie une liste de 0 ou 1 de longueur nbr micro. La proba de détecter l'oiseau (quand il chante), dépend de la distance. 
+
+```{r}
+detection <- function(df_oiseau, temps, distance){
+  df_oiseau_t <- subset(df_oiseau, t == temps)
+  
+  # Pour chaque micro :
+  liste_detection_nbr_oiseau <- lapply(1:length(df_micro$micros_x), function(micro_i){
+    #print(paste("MICRO ",micro_i," ======== "))
+    
+    # pour chaque oiseau :
+    detection_micro_i <- lapply(1:length(df_oiseau_t$x), function(oiseau_j){
+      #print(paste("OISEAU ",oiseau_j," -------- "))
+      distance_oiseau_j_micro_i <- distance[[micro_i]][[oiseau_j]]
+      proba_entendre <- function_proba_entendre(distance_oiseau_j_micro_i)
+      detect <- 1
+      #detect <- rbern(1, proba_entendre)
+      detection_micro_i_oiseau_j <- ifelse(detect == 1 & (df_oiseau_t[oiseau_j, 4] ==1), 1, 0)
+      #print(paste("detection_micro_i_oiseau_j ",detection_micro_i_oiseau_j))
+      return(detection_micro_i_oiseau_j)
+    })
+    # renvoie 1 si le micro detecte un oiseau, 0
+    detect_micro_i <- ifelse(sum(unlist(detection_micro_i)) >= 1, 1, 0)
+    #print(paste("detect_micro_i ",detect_micro_i))
+  
+    return(detect_micro_i)
+  }) 
+  
+  return(liste_detection_nbr_oiseau)
+}
+```
+
+Test de la fonction
+```{r}
+detection_par_micro <- detection(df_oiseau, t = 3, distance_par_micro_par_oiseau);detection_par_micro
+```
+
+
+# Detection reelle
+(Avec la distance < 0.178 km et chante ou pas)??
+
+
+```{r}
+detection_reelle <- function(df_oiseau, temps, list_distance){
+  df_oiseau_t <- subset(df_oiseau, t == temps)
+  detection <- lapply(1:length(df_micro$micros_x), function(micro_i){
+    #si les oiseaux qui sont à moins de 178 mètres chantent alors on détecte pour ce temps t (et ce micro i)
+      plus_proches <- which(list_distance[[micro_i]] <= 0.178)
+      detection <- ifelse(df_oiseau_t$chant[plus_proches] == 1,1,0)
+      return(ifelse(sum(detection_plus_proche) >= 1, 1, 0))
+  }) 
+  return(detection)
+}
+```
+
+
+
+
+# 5) Fonction détection pour 1h
+
+Renvoie un data frame avec les micros en ligne et le temps en colonne. Pour chaque temps, si le micro a détecté au moins 1 oiseau (qui chante) on a un 1, sinon un 0.+ la liste des distances
+
+```{r}
+liste_detection_1H_distance <- function(df_micro, df_oiseau){
+  df_detection_temps_tot <- data.frame()
+  #on garde une seule liste de distance pcq les oiseaux bougent ap
+  distance_t <- distance_micros_oiseaux_temps_t(df_micro, df_oiseau, temps = 1)
+
+  
+  #pour chaque temps on va calculer la distance de tous les oiseaux aux micros, puis on renvoie si y'a eu détection ou pas pr chaque micro
+  for (temps in (1:720)){
+    
+    #calcul des distances au temps t: pour qd les oiseaux bougeront
+    #distance_micros_oiseau_t <- distance_micros_oiseaux_temps_t(df_micro, df_oiseau, temps) #liste de longueur nbr micro
+    
+    #détection au temps t
+    detection_temps_t <- detection(df_oiseau, t = temps, distance_t)
+    detection_temps_t <- ifelse(sum(unlist(detection_temps_t)) >=1, 1, 0)
+    df_detection_temps_tot <- rbind(df_detection_temps_tot, detection_temps_t)
+  }
+  
+  # On échange colonnes et lignes
+  df_final <- data.frame(t(df_detection_temps_tot))
+  
+  # et on renomme les colonnes X1 X2 ... X720 en t1 t2 ... t720
+  colnames(df_final) <- noms_colonnes_t
+  return(list(df_final, distance_t))
+}
+```
+  
+Test de la fonction
+```{r}
+detection_1H_distance <- liste_detection_1H_distance(df_micro, df_oiseau);detection_1H_distance
+```
+
+
+# 6) Dataframe detection matinées*micros
+
+
+Renvoie UNE LISTE: le 1er élément c'est les data frame de  détection avec toutes les matinées et tous les micros, avec en colonne le temps (de 1 à 720) et en ligne les matinées x le nbr micro. 
+Le 2ème éléments c'est une liste. Chaque élément correspond à une matinée. Dans une matinée on a une liste de 9 (pour chaque micro), on a la distance à chaque individus pour chaque micro. 
+
+```{r}
+detection_distance_plsrs_matinees <- function(lambda, p, q, nbr_matinees, df_micro){
+  detection_matinees_tot <- data.frame()
+  list_distance <- c()
+  proportion_detection_sachant_presence <- list()
+
+  for (matinees in 1:nbr_matinees){
+    #calcul du nombre d'oiseau qui sont simulés
+    nbr_oiseaux <- intensite_M(lambda)
+    #création du tableau avec les positions des oiseaux
+    df_oiseau <- function_oiseau(nbr_oiseaux, p=p,q=q)
+    liste_detection_et_distance <- liste_detection_1H_distance(df_micro, df_oiseau)
+    detection_1H <- liste_detection_et_distance[[1]]
+    distance_matinee <- liste_detection_et_distance[[2]]
+    
+    # on renomme les lignes en fonction de la session (session k micro 1, session k micro 2 ect)
+    k = matinees
+    #rownames(detection_1H) <-  c(paste("session",k,"_micro1",sep=""),paste("session",k,"_micro2",sep=""),paste("session",k,"_micro3",sep=""),paste("session",k,"_micro4",sep=""),paste("session",k,"_micro5",sep=""),paste("session",k,"_micro6",sep=""),paste("session",k,"_micro7",sep=""),paste("session",k,"_micro8",sep=""),paste("session",k,"_micro9",sep=""))
+    
+    detection_matinees_tot <- rbind(detection_matinees_tot, detection_1H)
+    list_distance <- c(list_distance, list(distance_matinee))
+    
+    if (any(unlist(distance_matinee) <= 0.2)){
+      prop_matinee <-  sum(unlist(detection_1H))/720
+      proportion_detection_sachant_presence <- c(proportion_detection_sachant_presence, list(prop_matinee))
+    }
+  }
+  
+  
+  return(list(detection_matinees_tot, proportion_detection_sachant_presence, list_distance))
+}
+```
+
+Test de la fonction
+```{r}
+nbr_matins = 5
+lambda = 1
+p = 0.3
+q = 0.99
+liste_detection_et_distance <- detection_distance_plsrs_matinees(lambda = lambda, p = p, q = q, nbr_matinees = nbr_matins, df_micro = df_micro);liste_detection_et_distance
+```
+
+
+# 7) Liste des dataframes répétés
+
+Repetition plusieurs fois des simulations des matinées. Pour faire ensuite tourner le modèle d'occupancy sur chaque étude et faire des moyennes et des écarts types.
+On aura une liste de longueur "repetitions". Le premier élément de la liste est une liste avec 9 data frame (nombre de micros) qui correspond à la première répétition.
+
+
+```{r}
+repetition_etude <- function(lambda, p, q, nbr_matinees, df_micro, repetitions){
+  liste_repetitions_detections <- as.list(rep(0, repetitions))
+  liste_repetitons_distances <- as.list(rep(0, repetitions))
+  liste_repetitions_proportions <- as.list(rep(0,repetitions))
+  for (repet in 1:repetitions){
+    print(paste0("répétition ", repet))
+    une_rep <- detection_distance_plsrs_matinees(lambda, p, q, nbr_matinees, df_micro)
+    liste_repetitions_detections[[repet]] <- une_rep[[1]] #on ajoute les df des détection à la liste
+    liste_repetitions_proportions[[repet]] <- une_rep[[2]]
+    liste_repetitons_distances[[repet]] <- une_rep[[3]] # on ajoute les df_oiseau à la liste
+  }
+  detection_empirique <- mean(unlist(liste_repetitions_proportions))
+  return(list(liste_repetitions_detections, detection_empirique, liste_repetitons_distances))
+}
+```
+
+
+
+```{r}
+nbr_matins = 30
+lambda = 1
+p = 0.3
+q = 0.99
+repet = 5
+liste_repet <- repetition_etude(lambda, p, q, nbr_matins, df_micro, repet)
+```
+
+
+## ---- MODELE OCCUPANCY -------------------------------------------------------------
+
+# 1) Modèle avec predict
+
+On va faire tourner le modèle d'occupancy sur les détections de chaque repet. Le micro est une covariable pour l'occupancy (mais pas pour la detection)
+
+```{r}
+function_occu_detect <- function(list_repetetitions_etudes){
+  liste_occupancy <- list()
+  liste_detection <- list()
+  
+  for (repetition_j in 1:length(list_repetetitions_etudes)){ #pour ça, on parcourt les répétitions des études
+    df_rep_j <- list_repetetitions_etudes[[repetition_j]]
+    
+    df_unmarked <- unmarkedFrameOccu(y = df_rep_j) 
+    modele_occu <- occu(formula = ~1 # detection formula first
+                            ~1, # occupancy formula second, 
+                    data = df_unmarked)
+    
+    #pour detection on a pas de covariate donc on peut utiliser backtransform() comme ci dessous
+    detection <- predict(modele_occu, type = "det", newdata = data.frame(obs = 9))$Predicted[1]
+    
+    occupancy <- predict(modele_occu, type="state")$Predicted[1]
+    
+    liste_occupancy <- c(liste_occupancy, occupancy)
+    liste_detection <- c(liste_detection, detection)
+    }
+  
+  return(list(liste_occupancy, liste_detection))
+}
+```
+
+
+Test de la fonction
+
+```{r}
+df_occu_detect_repet <- function_occu_detect(liste_repet[[1]]) 
+save(df_occu_detect_repet, file = "scenario2_Marie_lambda1_p0.4q0.8")
+```
+
+
+# 2) Extraction moyenne + ecart-type de la proba d'occupancy + detection
+
+Extraction de la moyenne d'occupancy pour chaque micro, et de la moyenne de détection
+
+```{r}
+function_moy_sd_occu <- function(df_occu_detect_repetition){
+  df_occu <- df_occu_detect_repetition[[1]]
+  moy_sd_occu_micro <- lapply(1:length(df_micro$micros_x), function(micro_i){
+    list_micro_i_tot_rep <- c()
+    for (repet in 1:length(df_occu)){
+      list_micro_i_tot_rep <- c(list_micro_i_tot_rep, df_occu[[repet]][[micro_i]])
+    }
+    return(list(mean(list_micro_i_tot_rep), sd(list_micro_i_tot_rep)))
+  })
+  return(moy_sd_occu_micro)
+}
+function_moy_sd_det <- function(df_occu_detect_repetition){
+  df_detect <- df_occu_detect_repetition[[2]]
+  df_detect <- unlist(df_detect)
+  moy_detect <- mean(df_detect)
+  sd_detect <- sd(df_detect)
+  return(list(moy_detect, sd_detect))
+}
+```
+
+Test de la fonction
+
+```{r}
+liste_moyenne_sd_occu <- function_moy_sd_occu(df_occu_detect_repet)
+moy_sd_detect <- function_moy_sd_det(df_occu_detect_repet)
+#save(liste_moyenne_sd_occu, file = "simu3bis_moy&sd_occu_lambda1_pc0")
+#save(moy_sd_detect, file = "simu3bis_moy&sd_detect_lambda1_pc0")
+moyenne_des_moyennes_occupancy <- list(rep(0, 9))
+for (micro in 1:length(liste_moyenne_sd_occu)){
+  moyenne_des_moyennes_occupancy[micro] <- liste_moyenne_sd_occu[[micro]][1]
+}
+moyenne_des_moyennes_occupancy <- mean(unlist(moyenne_des_moyennes_occupancy));moyenne_des_moyennes_occupancy
+```
+
+
+
+## ---- PRESENCE REELLE -------------------------------------------------------------
+
+```{r}
+tot_distance_repet <- liste_repet[[2]]
+```
+
+```{r}
+
+function_proba_presence_reelle_micro <- function(repetition_liste_distances){
+  proba_presence_par_micro <- as.list(rep(0,9))
+  #on parcourt les repetitions
+  for (repetition_i in (1:length(repetition_liste_distances))){
+    matinees_repetition_i <- repetition_liste_distances[[repetition_i]]
+    #on parcourt les matinées
+    for (matinee_j in 1:length(matinees_repetition_i)){
+      #on parcourt les micros
+      micros_matinee_j <- matinees_repetition_i[[matinee_j]]
+      for (micro_k in 1:length(micros_matinee_j)){
+        individus_micro_k <- micros_matinee_j[[micro_k]]
+        presence_micro_k_matinee_j <- ifelse(any(unlist(individus_micro_k)<0.2), 1,0)
+        print(presence_micro_k_matinee_j)
+        proba_presence_par_micro[micro_k] <- proba_presence_par_micro[[micro_k]] + presence_micro_k_matinee_j/(length(repetition_liste_distances) * length(repetition_liste_distances[[1]]))
+      }
+    }
+  }
+  return(proba_presence_par_micro)
+}
+
+
+```
+
+```{r}
+tot_distance_repet <- liste_repet[[2]]
+proba_presence_reelle_micro <- function_proba_presence_reelle_micro(tot_distance_repet)
+```
+
+
+##---- DETECTION REELLE ----------------------------------------------------
+
+Les oiseaux qui devraient être détectés sont les oiseaux qui chantent et dont l'intensité de chant est perçu par le micro. Soit quand le chant de l'oiseau arrivé au micro est > à 40 dB. 
+Calculons la distance max à laquelle le micro peut détecter le chant de l'oiseau
+on a pour l'atténuation: atténuation = 20*log10(0.001/distance_au_micro)
+On cherche la distance au micro telle que l'atténuation soit > à 85 - 40 dB. L'atténuation doit donc être supérieur à -45 dB. Au delà, le micro ne détecte pas le chant de l'oiseau. 
+Cela donne donc une distance maximum de l'oiseau (pour qu'il soit entendu) de: 
+distance_max = 0.001/10^(-45/20) = 0.178 mètres
+Si les oiseaux sont plus loin on les entend pas.
+
+Il faut également prendre en compte le fait que ces oiseaux peuvent chanter ou pas chanter.
+
+Ainsi les oiseaux qui devraient être réellement détectés par les micros sont: l'oiseau est dans l'aire de détection + cet oiseau chante
+
+
+Proba détection:
+si y'avait 320 détection sur les 720 temps (soit 320 "1" ==> au moins un oiseau chantait et était à moins de 178 mètres)
+
+
+
+
+
+
+
+
