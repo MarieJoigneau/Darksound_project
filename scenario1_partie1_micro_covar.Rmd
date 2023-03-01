@@ -28,7 +28,7 @@ distance <- function(x1,x2,y1,y2){
 }
 ```
 
-Permet de nommer les 720 colonnes X1 X2 ... en t1 t2 ...
+Permet de nommer les 720 colonnes de temps X1 X2 ... en t1 t2 ...
 
 ```{r}
 noms_colonnes_t <- sapply(1:720,function(i){
@@ -48,7 +48,7 @@ plot(df_micro$micros_x,df_micro$micros_y,xlim=c(0,1.2),ylim=c(0,1.2),bty="l",typ
 
 ## ---- SIMULATION -------------------------------------------------------------
 
-# 1) Intensité M en fonction de lambda et de la surface
+# 1) Intensité d'oiseaux moyens M en fonction de lambda et de la surface
 
 ```{r}
 intensite_M <- function(lambda, surface=1.2*1.2){
@@ -63,7 +63,9 @@ Test de la function
 M <- intensite_M(lambda = 20, surface = 1.44);M
 ```
 
-# 2) Génération du tableau de coordonnées des oiseaux pour toute l'heure
+# 2) Génération du tableau de coordonnées + du chant des oiseaux (au hasard) pour toute l'heure
+
+Positionnement des oiseaux au hasard sur toute la zone 
 
 ```{r}
 function_oiseau <- function(intensite_M,treshold_chant){
@@ -258,7 +260,7 @@ liste_repet <- repetition_etude(lambda, treshold, nbr_matins, df_micro, repet)
 
 # 1) Le modèle
 
-On va faire tourner le modèle d'occupancy sur chaqu repet. Le micro est une covariable pour l'occupancy (mais pas pour la detection)
+On va faire tourner le modèle d'occupancy sur chaque repet. Le micro est une covariable pour l'occupancy (mais pas pour la detection)
 
 ```{r}
 

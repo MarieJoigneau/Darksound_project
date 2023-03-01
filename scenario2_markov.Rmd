@@ -181,7 +181,7 @@ test10[which(test10$x==test10$x[1]),]$chant # pour voir pour un oiseau
 ```
 
 
-# 2) Génération du tableau de coordonnées des oiseaux pour toute l'heure
+# 2) Génération du tableau de coordonnées + du chant (à l'aide de la fonction chant_Markov) des oiseaux pour toute l'heure
 
 ```{r}
 function_oiseau <- function(intensite_M,p,q){
