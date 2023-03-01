@@ -1,0 +1,558 @@
+---
+title: "Figures_markov"
+author: "Armelle Lajeunesse"
+date: "2022-12-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(unmarked)
+```
+
+# Résultat scénario 1 (micros séparés)
+
+```{r}
+load("simu3bis_lambda0.5_pc0.5")
+simu3bis_lambda0.5_pc05_occ <-as.vector(do.call(cbind, df_occu_detect_repet[[1]]))
+simu3bis_lambda0.5_pc05_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda0.5_pc05 <-as.data.frame(cbind(simu3bis_lambda0.5_pc05_occ, simu3bis_lambda0.5_pc05_det, rep(1:9, 50), rep(0.5, 450), rep(0.5, 450)))
+colnames(simu3bis_lambda0.5_pc05) <-c("Occupancy", "Detection", "Micro", "Lambda", "PC")
+simu3bis_lambda0.5_pc05$Micro <-as.factor(simu3bis_lambda0.5_pc05$Micro)
+simu3bis_lambda0.5_pc05$Lambda <-as.factor(simu3bis_lambda0.5_pc05$Lambda)
+simu3bis_lambda0.5_pc05$PC <-as.factor(simu3bis_lambda0.5_pc05$PC)
+
+load("simu3bis_lambda3_pc0.5")
+simu3bis_lambda3_pc05_occ <-as.vector(do.call(cbind, df_occu_detect_repet[[1]]))
+simu3bis_lambda3_pc05_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda3_pc05 <-as.data.frame(cbind(simu3bis_lambda3_pc05_occ, simu3bis_lambda3_pc05_det, rep(1:9, 50), rep(3, 450), rep(0.5, 450)))
+colnames(simu3bis_lambda3_pc05) <-c("Occupancy", "Detection", "Micro", "Lambda", "PC")
+simu3bis_lambda3_pc05$Micro <-as.factor(simu3bis_lambda3_pc05$Micro)
+simu3bis_lambda3_pc05$Lambda <-as.factor(simu3bis_lambda3_pc05$Lambda)
+simu3bis_lambda3_pc05$PC <-as.factor(simu3bis_lambda3_pc05$PC)
+
+ggplot(simu3bis_lambda0.5_pc05, aes(y = Occupancy, x = Micro))+
+  geom_boxplot()+
+  ggtitle("Nombre moyen d'oiseaux : 0.5")+
+    geom_hline(yintercept = 0.06, color = "red")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 6))
+
+ggplot(simu3bis_lambda3_pc05, aes(y = Occupancy, x = Micro))+
+  geom_boxplot()+
+  ggtitle("Nombre moyen d'oiseaux : 1")+
+  geom_hline(yintercept = 0.31, color = "red")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 6))
+```
+
+
+Il n'y a pas de différence dans la probabilité de présence entre les différents micros. Nous présentons les résultats à l'échelle de la zone entière.
+
+```{r}
+## Chargement et traitement des résultats du modèle d'occupancy
+
+# Lambda 0.5
+
+# Probabilité de chanter : 100%
+load("simu3bis_lambda0.5_pc1")
+simu3bis_lambda0.5_pc0_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda0.5_pc0_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda0.5_pc0 <-as.data.frame(cbind(simu3bis_lambda0.5_pc0_occ, simu3bis_lambda0.5_pc0_det, rep(0.5, 50), rep(1, 50)))
+colnames(simu3bis_lambda0.5_pc0) <-c("Occupancy", "Detection", "Lambda", "PC")
+simu3bis_lambda0.5_pc0$Lambda <-as.factor(simu3bis_lambda0.5_pc0$Lambda)
+simu3bis_lambda0.5_pc0$PC <-as.factor(simu3bis_lambda0.5_pc0$PC)
+
+# Probabilité de chanter : 50%
+load("simu3bis_lambda0.5_pc0.5")
+simu3bis_lambda0.5_pc05_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda0.5_pc05_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda0.5_pc05 <-as.data.frame(cbind(simu3bis_lambda0.5_pc05_occ, simu3bis_lambda0.5_pc05_det, rep(0.5, 50), rep(0.5, 50)))
+colnames(simu3bis_lambda0.5_pc05) <-c("Occupancy", "Detection",  "Lambda", "PC")
+simu3bis_lambda0.5_pc05$Lambda <-as.factor(simu3bis_lambda0.5_pc05$Lambda)
+simu3bis_lambda0.5_pc05$PC <-as.factor(simu3bis_lambda0.5_pc05$PC)
+
+# Probabilité de chanter : 10%
+load("simu3bis_lambda0.5_pc0.1")
+simu3bis_lambda0.5_pc09_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda0.5_pc09_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda0.5_pc09 <-as.data.frame(cbind(simu3bis_lambda0.5_pc09_occ, simu3bis_lambda0.5_pc09_det, rep(0.5, 50), rep(0.1, 50)))
+colnames(simu3bis_lambda0.5_pc09) <-c("Occupancy", "Detection", "Lambda", "PC")
+simu3bis_lambda0.5_pc09$Lambda <-as.factor(simu3bis_lambda0.5_pc09$Lambda)
+simu3bis_lambda0.5_pc09$PC <-as.factor(simu3bis_lambda0.5_pc09$PC)
+
+# lambda : 1
+
+# Probabilité de chanter : 100%
+load("simu3bis_lambda1_pc0")
+simu3bis_lambda1_pc0_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda1_pc0_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda1_pc0 <-as.data.frame(cbind(simu3bis_lambda1_pc0_occ, simu3bis_lambda1_pc0_det, rep(1, 50), rep(1, 50)))
+colnames(simu3bis_lambda1_pc0) <-c("Occupancy", "Detection", "Lambda", "PC")
+simu3bis_lambda1_pc0$Lambda <-as.factor(simu3bis_lambda1_pc0$Lambda)
+simu3bis_lambda1_pc0$PC <-as.factor(simu3bis_lambda1_pc0$PC)
+
+# Probabilité de chanter : 50%
+load("simu3bis_lambda1_pc0.5")
+simu3bis_lambda1_pc05_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda1_pc05_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda1_pc05 <-as.data.frame(cbind(simu3bis_lambda1_pc05_occ, simu3bis_lambda1_pc05_det, rep(1, 50), rep(0.5, 50)))
+colnames(simu3bis_lambda1_pc05) <-c("Occupancy", "Detection", "Lambda", "PC")
+simu3bis_lambda1_pc05$Lambda <-as.factor(simu3bis_lambda1_pc05$Lambda)
+simu3bis_lambda1_pc05$PC <-as.factor(simu3bis_lambda1_pc05$PC)
+
+# Probabilité de chanter : 10%
+load("simu3bis_lambda1_pc0.9")
+simu3bis_lambda1_pc09_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda1_pc09_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda1_pc09 <-as.data.frame(cbind(simu3bis_lambda1_pc09_occ, simu3bis_lambda1_pc09_det, rep(1, 50), rep(0.1, 50)))
+colnames(simu3bis_lambda1_pc09) <-c("Occupancy", "Detection", "Lambda", "PC")
+simu3bis_lambda1_pc09$Lambda <-as.factor(simu3bis_lambda1_pc09$Lambda)
+simu3bis_lambda1_pc09$PC <-as.factor(simu3bis_lambda1_pc09$PC)
+
+# Lambda :3
+
+# Probabilité de chanter : 100%
+load("simu3bis_lambda3_pc0")
+simu3bis_lambda3_pc0_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda3_pc0_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda3_pc0 <-as.data.frame(cbind(simu3bis_lambda3_pc0_occ, simu3bis_lambda3_pc0_det, rep(3, 50), rep(1, 50)))
+colnames(simu3bis_lambda3_pc0) <-c("Occupancy", "Detection", "Lambda", "PC")
+simu3bis_lambda3_pc0$Lambda <-as.factor(simu3bis_lambda3_pc0$Lambda)
+simu3bis_lambda3_pc0$PC <-as.factor(simu3bis_lambda3_pc0$PC)
+
+# Probabilité de chanter : 50%
+load("simu3bis_lambda3_pc0.5")
+simu3bis_lambda3_pc05_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda3_pc05_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda3_pc05 <-as.data.frame(cbind(simu3bis_lambda3_pc05_occ, simu3bis_lambda3_pc05_det, rep(3, 50), rep(0.5, 50)))
+colnames(simu3bis_lambda3_pc05) <-c("Occupancy", "Detection",  "Lambda", "PC")
+simu3bis_lambda3_pc05$Lambda <-as.factor(simu3bis_lambda3_pc05$Lambda)
+simu3bis_lambda3_pc05$PC <-as.factor(simu3bis_lambda3_pc05$PC)
+
+# Probabilité de chanter : 10%
+load("simu3bis_lambda3_pc0.9")
+simu3bis_lambda3_pc09_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))[, 1]
+simu3bis_lambda3_pc09_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]][-1]))
+simu3bis_lambda3_pc09 <-as.data.frame(cbind(simu3bis_lambda3_pc09_occ, simu3bis_lambda3_pc09_det, rep(3, 50), rep(0.1, 50)))
+colnames(simu3bis_lambda3_pc09) <-c("Occupancy", "Detection", "Lambda", "PC")
+simu3bis_lambda3_pc09$Lambda <-as.factor(simu3bis_lambda3_pc09$Lambda)
+simu3bis_lambda3_pc09$PC <-as.factor(simu3bis_lambda3_pc09$PC)
+
+df <-rbind(simu3bis_lambda0.5_pc0, 
+           simu3bis_lambda0.5_pc05, 
+           simu3bis_lambda0.5_pc09, 
+           simu3bis_lambda1_pc0, 
+           simu3bis_lambda1_pc05, 
+           simu3bis_lambda1_pc09, 
+           simu3bis_lambda3_pc0, 
+           simu3bis_lambda3_pc05, 
+           simu3bis_lambda3_pc09)
+```
+
+```{r}
+df$y_values <- factor(df$Lambda, levels = c(0.5, 1, 3))
+levels(df$y_values) <-c(0.06, 0.12, 0.31)
+
+df$y_end <-factor(df$Lambda, levels = c(0.5, 1, 3))
+levels(df$y_end) <-c(0.06, 0.12, 0.313)
+
+df$y_values <-as.numeric(as.character(df$y_values))
+df$y_end <-as.numeric(as.character(df$y_end))
+
+df$y_values2 <- factor(df$PC, levels = c(1, 0.5, 0.1))
+levels(df$y_values2) <-c(1, 0.5, 0.1)
+
+df$y_end2 <-factor(df$PC, levels = c(1, 0.5, 0.1))
+levels(df$y_end2) <-c(1, 0.5, 0.1)
+
+df$y_values2 <-as.numeric(as.character(df$y_values2))
+df$y_end2 <-as.numeric(as.character(df$y_end2))
+
+df$Lambda <-factor(df$Lambda, c("3", "1", "0.5"))
+
+ggplot(df, aes(y = Occupancy, x = PC, fill = PC)) +
+  geom_boxplot()+
+  ylab("Probabilité de présence")+
+  facet_grid(~Lambda)+
+  geom_segment(aes(y=y_values, yend=y_end), x=0, xend=4, color = "red")+
+  scale_x_discrete(limits = c("1", "0.5", "0.1"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de présence en fonction de la densité et de la probabilité de chanter",
+       subtitle = "Densité moyenne d'oiseau",
+       fill = "Probabilité de chanter")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 11),
+        plot.subtitle = element_text(size = 10, hjust = 0.5),
+        axis.title.x = element_blank(), 
+        strip.background = element_rect(fill = "aliceblue"))
+
+ggplot(df, aes(y = Detection, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de détection")+
+  facet_grid(~PC)+
+  geom_segment(aes(y=y_values2, yend=y_end2), x=0, xend=4, color = "red")+
+  scale_x_discrete(limits = c("3", "1", "0.5"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de détection en fonction de la densité et de la probabilité de chanter",
+       subtitle = "Probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 11),
+        plot.subtitle = element_text(size = 10, hjust = 0.5),
+        axis.title.x = element_blank(),
+        strip.background = element_rect(fill = "floralwhite"))
+```
+
+Sans violation des hypothèses du modèle d'occupancy, les probabilités de présence et de détection ne sont pas différentes des probabilités théoriques. 
+
+## Résultats scénario 2 : p0.3 q0.99 (situation réaliste)
+
+```{r}
+# Lambda 0.5
+load("occu_detect_scenario2_lambda0.5_p0.3q0.99")
+simu4_lambda0.5_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda0.5_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda0.5 <-as.data.frame(cbind(simu4_lambda0.5_occ, simu4_lambda0.5_det, rep(0.5, 50)))
+colnames(simu4_lambda0.5) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda0.5$Lambda <-as.factor(simu4_lambda0.5$Lambda)
+
+# lambda1
+load("occu_detect_scenario2_lambda1_p0.3q0.99")
+simu4_lambda1_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda1_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda1 <-as.data.frame(cbind(simu4_lambda1_occ, simu4_lambda1_det, rep(1, 50)))
+colnames(simu4_lambda1) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda1$Lambda <-as.factor(simu4_lambda1$Lambda)
+
+# Lambda3
+load("occu_detect_scenario2_lambda3_p0.3q0.99")
+simu4_lambda3_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda3_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda3 <-as.data.frame(cbind(simu4_lambda3_occ, simu4_lambda3_det, rep(3, 50)))
+colnames(simu4_lambda3) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda3$Lambda <-as.factor(simu4_lambda3$Lambda)
+
+df2 <-rbind(simu4_lambda3, 
+           simu4_lambda1,
+           simu4_lambda0.5)
+
+df2$y_values <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_values) <-c(0.43, 0.68, 0.97)
+
+df2$y_end <-factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_end) <-c(0.43, 0.68, 0.97)
+
+df2$y_values <-as.numeric(as.character(df2$y_values))
+df2$y_end <-as.numeric(as.character(df2$y_end))
+
+df2$boxplot.nr <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$boxplot.nr) <-c(1, 2, 3)
+df2$boxplot.nr <-as.numeric(as.character(df2$boxplot.nr))
+
+df2$y_values2 <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_values2) <-c(0.021, 0.028, 0.060)
+
+df2$y_end2 <-factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_end2) <-c(0.021, 0.028, 0.060)
+
+df2$y_values2 <-as.numeric(as.character(df2$y_values2))
+df2$y_end2 <-as.numeric(as.character(df2$y_end2))
+
+df2$boxplot.nr2 <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$boxplot.nr2) <-c(1, 2, 3)
+df2$boxplot.nr2 <-as.numeric(as.character(df2$boxplot.nr2))
+
+ggplot(df2, aes(y = Occupancy, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de présence")+
+  geom_segment(data=df2,aes(x=boxplot.nr-0.5,xend=boxplot.nr+0.5,
+                    y=y_values,yend=y_end),inherit.aes=FALSE,color="red")+
+  scale_x_discrete(limits = c("0.5", "1", "3"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de présence en fonction de la densité et de la probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 10),
+        axis.title.x = element_blank())
+
+ggplot(df2, aes(y = Detection, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de détection")+
+  geom_segment(data=df2,aes(x=boxplot.nr2-0.5,xend=boxplot.nr2+0.5,
+                    y=y_values2,yend=y_end2),inherit.aes=FALSE,color="red")+
+  scale_x_discrete(limits = c("0.5", "1", "3"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de détection en fonction de la densité et de la probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 10),
+        axis.title.x = element_blank())
+```
+
+Nous avons testé une situation réaliste pour la probabilité de chanter des oiseaux dans le cadre du projet darksound. Avec la violation de l'hypothèse d'indépendance entre les occasions et dans ce cas réaliste, les probailités de présence sont surestimées et les probabilités de détection son sous-estimées (cela signifie qu'il y a très peu de données informatives pour le modèle d'occupancy)
+
+## Résultats scénario 2 : p0.4 q0.8 (situation optimiste)
+
+```{r}
+# Lambda 0.5
+load("scenario2_Marie_lambda0.5_p0.4q0.8")
+simu4_lambda0.5_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda0.5_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda0.5 <-as.data.frame(cbind(simu4_lambda0.5_occ, simu4_lambda0.5_det, rep(0.5, 50)))
+colnames(simu4_lambda0.5) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda0.5$Lambda <-as.factor(simu4_lambda0.5$Lambda)
+
+# lambda1
+load("scenario2_Marie_lambda1_p0.4q0.8")
+simu4_lambda1_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda1_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda1 <-as.data.frame(cbind(simu4_lambda1_occ, simu4_lambda1_det, rep(1, 50)))
+colnames(simu4_lambda1) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda1$Lambda <-as.factor(simu4_lambda1$Lambda)
+
+# Lambda3
+load("scenario2_Marie_lambda3_p0.4q0.8")
+simu4_lambda3_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda3_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda3 <-as.data.frame(cbind(simu4_lambda3_occ, simu4_lambda3_det, rep(3, 50)))
+colnames(simu4_lambda3) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda3$Lambda <-as.factor(simu4_lambda3$Lambda)
+
+df2 <-rbind(simu4_lambda3, 
+           simu4_lambda1,
+           simu4_lambda0.5)
+
+df2$y_values <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_values) <-c(0.43, 0.68, 0.97)
+
+df2$y_end <-factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_end) <-c(0.43, 0.68, 0.97)
+
+df2$y_values <-as.numeric(as.character(df2$y_values))
+df2$y_end <-as.numeric(as.character(df2$y_end))
+
+df2$boxplot.nr <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$boxplot.nr) <-c(1, 2, 3)
+df2$boxplot.nr <-as.numeric(as.character(df2$boxplot.nr))
+
+df2$y_values2 <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_values2) <-c(0.33, 0.42, 0.67)
+
+df2$y_end2 <-factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_end2) <-c(0.33, 0.42, 0.67)
+
+df2$y_values2 <-as.numeric(as.character(df2$y_values2))
+df2$y_end2 <-as.numeric(as.character(df2$y_end2))
+
+df2$boxplot.nr2 <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$boxplot.nr2) <-c(1, 2, 3)
+df2$boxplot.nr2 <-as.numeric(as.character(df2$boxplot.nr2))
+
+ggplot(df2, aes(y = Occupancy, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de présence")+
+  geom_segment(data=df2,aes(x=boxplot.nr-0.5,xend=boxplot.nr+0.5,
+                    y=y_values,yend=y_end),inherit.aes=FALSE,color="red")+
+  scale_x_discrete(limits = c("0.5", "1", "3"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de présence en fonction de la densité et de la probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 10),
+        axis.title.x = element_blank())
+
+ggplot(df2, aes(y = Detection, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de détection")+
+  geom_segment(data=df2,aes(x=boxplot.nr2-0.5,xend=boxplot.nr2+0.5,
+                    y=y_values2,yend=y_end2),inherit.aes=FALSE,color="red")+
+  scale_x_discrete(limits = c("0.5", "1", "3"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de détection en fonction de la densité et de la probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 10),
+        axis.title.x = element_blank())
+```
+
+Dans une situation optimiste où la probabilité de chanter est plus importante et donc la détection facilitée, les probabilités de présence et de détection sont mieux estimées que dans la situation réaliste.
+
+## Résultats : scénario3 p0.3 q0.99 (situation réaliste)
+
+```{r}
+# Lambda 0.5
+load("scenario3_Marie_lambda0.5_p0.3q0.99")
+simu4_lambda0.5_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda0.5_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda0.5 <-as.data.frame(cbind(simu4_lambda0.5_occ, simu4_lambda0.5_det, rep(0.5, 50)))
+colnames(simu4_lambda0.5) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda0.5$Lambda <-as.factor(simu4_lambda0.5$Lambda)
+
+# lambda1
+load("scenario3_Marie_lambda1_p0.3q0.99")
+simu4_lambda1_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda1_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda1 <-as.data.frame(cbind(simu4_lambda1_occ, simu4_lambda1_det, rep(1, 50)))
+colnames(simu4_lambda1) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda1$Lambda <-as.factor(simu4_lambda1$Lambda)
+
+# Lambda3
+load("scenario3_Marie_lambda3_p0.3q0.99")
+simu4_lambda3_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda3_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda3 <-as.data.frame(cbind(simu4_lambda3_occ, simu4_lambda3_det, rep(3, 50)))
+colnames(simu4_lambda3) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda3$Lambda <-as.factor(simu4_lambda3$Lambda)
+
+df2 <-rbind(simu4_lambda3, 
+           simu4_lambda1,
+           simu4_lambda0.5)
+
+df2$y_values <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_values) <-c(0.43, 0.68, 0.97)
+
+df2$y_end <-factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_end) <-c(0.43, 0.68, 0.97)
+
+df2$y_values <-as.numeric(as.character(df2$y_values))
+df2$y_end <-as.numeric(as.character(df2$y_end))
+
+df2$boxplot.nr <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$boxplot.nr) <-c(1, 2, 3)
+df2$boxplot.nr <-as.numeric(as.character(df2$boxplot.nr))
+
+df2$y_values2 <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_values2) <-c(0.007, 0.01, 0.022)
+
+df2$y_end2 <-factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_end2) <-c(0.007, 0.01, 0.022)
+
+df2$y_values2 <-as.numeric(as.character(df2$y_values2))
+df2$y_end2 <-as.numeric(as.character(df2$y_end2))
+
+df2$boxplot.nr2 <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$boxplot.nr2) <-c(1, 2, 3)
+df2$boxplot.nr2 <-as.numeric(as.character(df2$boxplot.nr2))
+
+ggplot(df2, aes(y = Occupancy, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de présence")+
+  geom_segment(data=df2,aes(x=boxplot.nr-0.5,xend=boxplot.nr+0.5,
+                    y=y_values,yend=y_end),inherit.aes=FALSE,color="red")+
+  scale_x_discrete(limits = c("0.5", "1", "3"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de présence en fonction de la densité et de la probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 10),
+        axis.title.x = element_blank())
+
+ggplot(df2, aes(y = Detection, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de détection")+
+  geom_segment(data=df2,aes(x=boxplot.nr2-0.5,xend=boxplot.nr2+0.5,
+                    y=y_values2,yend=y_end2),inherit.aes=FALSE,color="red")+
+  scale_x_discrete(limits = c("0.5", "1", "3"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de détection en fonction de la densité et de la probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 10),
+        axis.title.x = element_blank())
+```
+
+Avec l'atténuation du chant avec la distance et dans le cas d'une situation réaliste : les probabilités de présence sont complètement surestimées et les probabilité de  détection sous-estimés. Les résultats sont encore plus abérrant que pour le scénario précédent.
+
+## Résultats scénario3 p0.4 q0.8 (situation optimiste)
+
+```{r}
+# Lambda 0.5
+load("scenario3_Marie_lambda0.5_p0.4q0.8")
+simu4_lambda0.5_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda0.5_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda0.5 <-as.data.frame(cbind(simu4_lambda0.5_occ, simu4_lambda0.5_det, rep(0.5, 50)))
+colnames(simu4_lambda0.5) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda0.5$Lambda <-as.factor(simu4_lambda0.5$Lambda)
+
+# lambda1
+load("scenario3_Marie_lambda1_p0.4q0.8")
+simu4_lambda1_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda1_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda1 <-as.data.frame(cbind(simu4_lambda1_occ, simu4_lambda1_det, rep(1, 50)))
+colnames(simu4_lambda1) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda1$Lambda <-as.factor(simu4_lambda1$Lambda)
+
+# Lambda3
+load("scenario3_Marie_lambda3_p0.4q0.8")
+simu4_lambda3_occ <-as.data.frame(do.call(rbind, df_occu_detect_repet[[1]]))
+simu4_lambda3_det <-as.vector(do.call(rbind, df_occu_detect_repet[[2]]))
+simu4_lambda3 <-as.data.frame(cbind(simu4_lambda3_occ, simu4_lambda3_det, rep(3, 50)))
+colnames(simu4_lambda3) <-c("Occupancy", "Detection", "Lambda")
+simu4_lambda3$Lambda <-as.factor(simu4_lambda3$Lambda)
+
+df2 <-rbind(simu4_lambda3, 
+           simu4_lambda1,
+           simu4_lambda0.5)
+
+df2$y_values <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_values) <-c(0.43, 0.68, 0.97)
+
+df2$y_end <-factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_end) <-c(0.43, 0.68, 0.97)
+
+df2$y_values <-as.numeric(as.character(df2$y_values))
+df2$y_end <-as.numeric(as.character(df2$y_end))
+
+df2$boxplot.nr <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$boxplot.nr) <-c(1, 2, 3)
+df2$boxplot.nr <-as.numeric(as.character(df2$boxplot.nr))
+
+df2$y_values2 <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_values2) <-c(0.12, 0.16, 0.32)
+
+df2$y_end2 <-factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$y_end2) <-c(0.12, 0.16, 0.32)
+
+df2$y_values2 <-as.numeric(as.character(df2$y_values2))
+df2$y_end2 <-as.numeric(as.character(df2$y_end2))
+
+df2$boxplot.nr2 <- factor(df2$Lambda, levels = c(0.5, 1, 3))
+levels(df2$boxplot.nr2) <-c(1, 2, 3)
+df2$boxplot.nr2 <-as.numeric(as.character(df2$boxplot.nr2))
+
+ggplot(df2, aes(y = Occupancy, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de présence")+
+  geom_segment(data=df2,aes(x=boxplot.nr-0.5,xend=boxplot.nr+0.5,
+                    y=y_values,yend=y_end),inherit.aes=FALSE,color="red")+
+  scale_x_discrete(limits = c("0.5", "1", "3"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de présence en fonction de la densité et de la probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 10),
+        axis.title.x = element_blank())
+
+ggplot(df2, aes(y = Detection, x = Lambda, fill = Lambda)) +
+  geom_boxplot()+
+  ylab("Probabilité de détection")+
+  geom_segment(data=df2,aes(x=boxplot.nr2-0.5,xend=boxplot.nr2+0.5,
+                    y=y_values2,yend=y_end2),inherit.aes=FALSE,color="red")+
+  scale_x_discrete(limits = c("0.5", "1", "3"))+
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))+
+  labs(title = "Probabilité de détection en fonction de la densité et de la probabilité de chanter",
+       fill = "Densité moyenne d'oiseau")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 10),
+        axis.title.x = element_blank())
+```
+
+Lorsque l'on est dans une situation optimiste, la surestimation des probabilité de présence ou la sous-estimation des probabilités de détection sont moins marqué que dans le cas précédent. 
+
+Nous pouvons en conclure que la rareté de l'espèce et la faible chance de détecter les oiseaux sont les critères principaux à la mauvaise estimation par le modèle d'occupancy. La violation d'une des hypothèses du modèle ajoute une contrainte supplémentaire mais peut éventuellement être faite si les condition la détection de l'espèce est suffisamment importante.
