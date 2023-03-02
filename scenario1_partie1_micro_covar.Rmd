@@ -164,8 +164,6 @@ detection_tous_micro_1H <- function(df_micro, df_oiseau){
   #pour chaque temps on va calculer la distance de tous les oiseaux aux micros, puis on renvoie si y'a eu détection ou pas pr chaque micro
   for (temps in (1:720)){
     
-    #calcul des distances au temps t: pour qd les oiseaux bougeront
-    #distance_micros_oiseau_t <- distance_micros_oiseaux_temps_t(df_micro, df_oiseau, temps) #liste de longueur nbr micro
     
     #détection au temps t
     detection_temps_t <- detection(distance_micros_oiseau_t, df_oiseau, t = temps)
@@ -263,7 +261,6 @@ liste_repet <- repetition_etude(lambda, treshold, nbr_matins, df_micro, repet)
 On va faire tourner le modèle d'occupancy sur chaque repet. Le micro est une covariable pour l'occupancy (mais pas pour la detection)
 
 ```{r}
-
 function_occu_detect <- function(list_repetetitions_etudes){
   liste_occupancy_par_micro <- list()
   detection_par_micro <- c()
@@ -284,9 +281,6 @@ function_occu_detect <- function(list_repetetitions_etudes){
     modele_occu <- occu(formula = ~1 # detection formula first
                             ~micro, # occupancy formula second, 
                     data = df_unmarked)
-    
-    #pour detection on a pas de covariate donc on peut utiliser backtransform() comme ci dessous
-    #detection <- backTransform(modele_occu, 'det')@estimate
 
     detection <- c(detection, predict(modele_occu, 
             newdata = data.frame(site = 1),
@@ -322,7 +316,6 @@ save(df_occu_detect_repet, file = "simu3_lambda0.5_pc0.5_micros_separes_vico")
 Extraction de la moyenne d'occupancy pour chaque micro, et de la moyenne de détection
 
 ```{r}
-
 function_moy_sd_occu <- function(df_occu_detect_repetition){
   df_occu <- df_occu_detect_repetition[[1]]
   moy_sd_occu_micro <- lapply(1:length(df_micro$micros_x), function(micro_i){

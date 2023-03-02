@@ -276,16 +276,10 @@ function_occu_detect <- function(list_repetetitions_etudes){
     
     y <- df_rep_j
     
-    #définition de la covariable "micro"
-
-    #micro <- df_rep_j[,721]
     df_unmarked <- unmarkedFrameOccu(y = y) 
     modele_occu <- occu(formula = ~1 # detection formula first
                             ~1, # occupancy formula second, 
                     data = df_unmarked)
-    
-    #pour detection on a pas de covariate donc on peut utiliser backtransform() comme ci dessous
-    #detection <- backTransform(modele_occu, 'det')@estimate
 
     detection <- c(detection, predict(modele_occu, 
             newdata = data.frame(site = 1),
@@ -317,7 +311,6 @@ df_occu_detect_repet <- function_occu_detect(liste_repet)
 Extraction de la moyenne d'occupancy pour chaque micro, et de la moyenne de détection
 
 ```{r}
-
 function_moy_sd_occu <- function(df_occu_detect_repetition){
   df_occu <- df_occu_detect_repetition
   moy_sd_occu_micro <- c(mean(unlist(df_occu)), sd(unlist(df_occu)))
@@ -331,7 +324,6 @@ function_moy_sd_det <- function(df_occu_detect_repet){
   sd_detect <- sd(df_detect)
   return(list(moy_detect, sd_detect))
 }
-
 ```
 
 Test de la fonction
