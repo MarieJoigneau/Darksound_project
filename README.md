@@ -20,6 +20,6 @@ Documents à disposition :
 
 Chaque fonction dans le code R est suivie d'une partie "test de la fonction". Cela a été mis en place afin de mieux comprendre la fonction.
 
-Merci,
-Bonne lecture et découverte,
+Merci,  
+Bonne lecture et découverte,  
 L'équipe
