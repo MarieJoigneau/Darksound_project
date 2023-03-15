@@ -9,8 +9,8 @@ Auteurs :
 - Armelle LAJEUNESSE armelle.lajeunesse@agrocampus-ouest.fr  
 
 Superviseurs :  
-- Marie-Pierre ETIENNE marie-pierre.etienne@agrocampus-ouest.fr  
-- Sylvain HAUPERT sylvain.haupert@mnhn.fr  
+- Marie-Pierre ETIENNE marie-pierre.etienne@agrocampus-ouest.fr (professeur à Institut Agro Rennes Angers https://marieetienne.github.io/bio.html)  
+- Sylvain HAUPERT sylvain.haupert@mnhn.fr (ingénieur au Museum National d'Histoire Naturelle https://isyeb.mnhn.fr/fr/annuaire/sylvain-haupert-6596)  
 
 Documents à disposition :  
 - Presentation = pour comprendre notre travail  
